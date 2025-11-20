@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>AI CV Generator</title>
+
+  <style>
+    :root{
+      --bg:#0b0d10; --panel:#11151b; --panel-2:#0e1217; --line:#222838;
+      --text:#e6e9ef; --muted:#aab2c0; --accent:#7dd3fc; --accent2:#a78bfa;
+      --good:#34d399; --warn:#fbbf24;
+      --radius:16px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    body[data-theme="light"]{
+      --bg:#f6f7fb; --panel:#ffffff; --panel-2:#f3f4f6; --line:#e5e7eb;
+      --text:#0f172a; --muted:#475569; --accent:#0284c7; --accent2:#7c3aed;
+      --shadow: 0 8px 20px rgba(2,8,23,.06);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 10% -10%, #18202b 0%, transparent 60%),
+        radial-gradient(1000px 600px at 110% 10%, #1b1630 0%, transparent 55%),
+        var(--bg);
+      line-height:1.5;
+    }
+    body[data-theme="light"]{
+      background: var(--bg);
+    }
+
+    header{
+      max-width:1200px; margin:22px auto 8px; padding:0 18px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.2px;
+      font-size:1.15rem;
+    }
+    .brand .dot{
+      width:12px; height:12px; border-radius:999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 20px rgba(125,211,252,.8);
+    }
+
+    .wrap{
+      max-width:1200px; margin:0 auto; padding:12px 18px 24px;
+      display:grid; grid-template-columns: 420px 1fr; gap:14px;
+    }
+    .card{
+      background:var(--panel); border:1px solid var(--line);
+      border-radius:var(--radius); box-shadow:var(--shadow);
+      padding:14px;
+    }
+    .card h2{
+      font-size:1.05rem; margin:0 0 8px; display:flex; align-items:center; gap:8px;
+    }
+    .card h2::after{
+      content:""; height:1px; flex:1; background:var(--line); margin-left:6px;
+    }
+    label{font-size:.9rem; color:var(--muted); display:block; margin:10px 0 6px;}
+    input, textarea, select{
+      width:100%; padding:10px 12px; border-radius:12px;
+      background:var(--panel-2); border:1px solid var(--line);
+      color:var(--text); outline:none; font-size:0.98rem;
+    }
+    textarea{min-height:80px; resize:vertical}
+
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+    .btn{
+      appearance:none; border:none; cursor:pointer;
+      padding:10px 12px; border-radius:12px; font-weight:700;
+      background:linear-gradient(135deg, #1f2937, #0b1020);
+      color:var(--text); border:1px solid var(--line);
+      transition:.15s ease transform, .15s ease filter, .15s ease opacity;
+    }
+    body[data-theme="light"] .btn{
+      background:linear-gradient(135deg, #eef2ff, #ffffff);
+      border:1px solid var(--line);
+      color:var(--text);
+    }
+    .btn:hover{transform:translateY(-1px); filter:brightness(1.07);}
+    .btn:active{transform:translateY(0);}
+    .btn.primary{
+      background:linear-gradient(135deg, var(--accent), var(--accent2));
+      color:#071018; border:none;
+    }
+    .btn.ghost{
+      background:transparent; border:1px dashed var(--line); color:var(--muted);
+    }
+    .btn.small{padding:6px 9px; font-size:.9rem; border-radius:10px;}
+
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px; border-radius:999px; background:var(--panel-2);
+      border:1px solid var(--line); font-size:.85rem; color:var(--muted);
+      margin:4px 6px 0 0;
+    }
+    .pill .x{cursor:pointer; color:#cbd5e1; font-weight:900; margin-left:2px;}
+
+    .section{
+      padding:10px; background:var(--panel-2);
+      border:1px solid var(--line); border-radius:12px; margin:8px 0;
+    }
+    .section-head{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:8px; margin-bottom:6px;
+    }
+    .muted{color:var(--muted)}
+    .tiny{font-size:.85rem}
+    .divider{height:1px; background:var(--line); margin:10px 0;}
+
+    /* Preview CV */
+    .preview{
+      background: #0c0f14;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow:hidden;
+    }
+    body[data-theme="light"] .preview{
+      background:#ffffff;
+    }
+
+    .cv{
+      padding:22px;
+      background: #0c0f14;
+    }
+    body[data-theme="light"] .cv{
+      background:#ffffff;
+    }
+    .cv-header{
+      display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
+      align-items:flex-start; padding-bottom:12px; border-bottom:1px solid var(--line);
+    }
+    .cv-name{font-weight:900; font-size:1.9rem; margin:0;}
+    .cv-title{color:var(--muted); font-weight:700; margin-top:4px;}
+    .cv-contact{display:grid; gap:4px; font-size:.95rem; text-align:right;}
+    .cv-contact a{color:var(--text); text-decoration:none;}
+
+    .cv-section{margin-top:14px;}
+    .cv-section h3{
+      font-size:1.05rem; margin:0 0 6px; display:flex; align-items:center; gap:8px;
+    }
+    .cv-section h3::after{
+      content:""; height:1px; flex:1; background:var(--line); margin-left:6px;
+    }
+    .cv-item{
+      padding:10px; border:1px solid var(--line); background:#0f1319;
+      border-radius:12px; margin:8px 0;
+    }
+    body[data-theme="light"] .cv-item{
+      background:#ffffff;
+    }
+
+    .cv-item-head{
+      display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; font-weight:800;
+    }
+    .cv-item-sub{color:var(--muted); font-weight:600; margin-top:2px;}
+    .cv-item ul{margin:8px 0 0 18px; padding:0; display:grid; gap:5px;}
+
+    .toolbar{
+      position:sticky; top:10px; z-index:5;
+      display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;
+    }
+
+    @media (max-width: 980px){
+      .wrap{grid-template-columns:1fr;}
+      .cv-contact{text-align:left;}
+    }
+
+    /* Print */
+    @media print{
+      body{background:#fff; color:#111827;}
+      header, .form-card, .toolbar{display:none !important;}
+      .wrap{padding:0; margin:0; max-width:none;}
+      .preview, .cv{border:none; box-shadow:none; background:#fff;}
+      .cv{padding:0;}
+      .cv *{color:#111827;}
+      .cv-section h3::after, .cv-header{border-color:#e5e7eb;}
+      .cv-item{background:#fff; border-color:#e5e7eb;}
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+<header>
+  <div class="brand"><span class="dot"></span> AI CV Generator</div>
+  <div class="muted tiny">Fill the form → preview updates live → print to PDF</div>
+</header>
+
+<main class="wrap">
+  <!-- FORM -->
+  <section class="card form-card">
+    <h2>Your details</h2>
+
+    <label>Full name</label>
+    <input id="name" placeholder="e.g. Jordan Smith"/>
+
+    <label>Job title / headline</label>
+    <input id="title" placeholder="e.g. Frontend Developer"/>
+
+    <div class="row">
+      <div>
+        <label>Email</label>
+        <input id="email" placeholder="you@email.com"/>
+      </div>
+      <div>
+        <label>Phone</label>
+        <input id="phone" placeholder="+44 ..."/>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Location</label>
+        <input id="location" placeholder="City, Country"/>
+      </div>
+      <div>
+        <label>Website / Portfolio</label>
+        <input id="website" placeholder="https://..."/>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>LinkedIn</label>
+        <input id="linkedin" placeholder="https://linkedin.com/in/..."/>
+      </div>
+      <div>
+        <label>GitHub (optional)</label>
+        <input id="github" placeholder="https://github.com/..."/>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <h2>AI summary</h2>
+    <label>Target role (helps AI)</label>
+    <input id="targetRole" placeholder="e.g. Junior Data Analyst"/>
+
+    <label>Extra notes for AI (optional)</label>
+    <textarea id="aiNotes" placeholder="What should your summary emphasize?"></textarea>
+
+    <div class="row">
+      <button class="btn primary" id="genSummary">✨ Generate AI Summary</button>
+      <button class="btn" id="clearSummary">Clear summary</button>
+    </div>
+
+    <label>Professional summary</label>
+    <textarea id="summary" placeholder="AI will write this for you, or type your own."></textarea>
+
+    <div class="divider"></div>
+
+    <h2>Skills</h2>
+    <div style="display:flex; gap:6px;">
+      <input id="skillInput" placeholder="Add a skill and press Enter"/>
+      <button class="btn small" id="addSkill">Add</button>
+    </div>
+    <div id="skillsList" style="margin-top:6px;"></div>
+
+    <div class="divider"></div>
+
+    <h2>Experience</h2>
+    <div id="expList"></div>
+    <button class="btn ghost" id="addExp">+ Add experience</button>
+
+    <div class="divider"></div>
+
+    <h2>Education</h2>
+    <div id="eduList"></div>
+    <button class="btn ghost" id="addEdu">+ Add education</button>
+
+    <div class="divider"></div>
+
+    <h2>Awards / Achievements</h2>
+    <label>One per line</label>
+    <textarea id="awards" placeholder="e.g. Employee of the Month — 2024"></textarea>
+
+    <div class="divider"></div>
+
+    <h2>Volunteering / Leadership</h2>
+    <div id="volList"></div>
+    <button class="btn ghost" id="addVol">+ Add volunteering</button>
+
+    <div class="divider"></div>
+
+    <h2>Interests / Hobbies</h2>
+    <div style="display:flex; gap:6px;">
+      <input id="interestInput" placeholder="Add an interest and press Enter"/>
+      <button class="btn small" id="addInterest">Add</button>
+    </div>
+    <div id="interestsList" style="margin-top:6px;"></div>
+
+    <div class="divider"></div>
+
+    <h2>Optional</h2>
+    <label>Certifications (one per line)</label>
+    <textarea id="certs" placeholder="e.g. Google Data Analytics — 2024"></textarea>
+
+    <label>Languages (one per line)</label>
+    <textarea id="languages" placeholder="e.g. English — Fluent"></textarea>
+
+    <div class="divider"></div>
+
+    <h2>API key (optional)</h2>
+    <div class="tiny muted" style="margin-bottom:6px;">
+      Only for personal testing. Don’t deploy a public page with a key here.
+      For production, call your own backend that talks to OpenAI. :contentReference[oaicite:1]{index=1}
+    </div>
+    <input id="apiKey" placeholder="sk-..."/>
+  </section>
+
+  <!-- PREVIEW -->
+  <section class="preview card">
+    <div class="toolbar">
+      <button class="btn" id="toggleTheme">🌗 Theme</button>
+      <button class="btn" id="loadDemo">Load demo data</button>
+      <button class="btn" id="saveLocal">Save to browser</button>
+      <button class="btn" id="loadLocal">Load saved</button>
+      <button class="btn primary" onclick="window.print()">🖨️ Export PDF</button>
+    </div>
+
+    <div id="cvPreview" class="cv" aria-live="polite"></div>
+  </section>
+</main>
+
+<script>
+  // ---------- State ----------
+  const state = {
+    skills: [],
+    experiences: [],
+    education: [],
+    volunteering: [],
+    interests: []
+  };
+
+  // ---------- Helpers ----------
+  const $ = (id) => document.getElementById(id);
+  const esc = (s="") => s.replace(/[&<>"]/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])
+  );
+
+  function setValue(id, val){ $(id).value = val ?? ""; }
+
+  // ---- Skills / Interests tags ----
+  function addTag(listKey, value){
+    const v = value.trim();
+    if(!v) return;
+    if(state[listKey].includes(v)) return;
+    state[listKey].push(v);
+    renderTags(listKey);
+    renderCV();
+  }
+
+  function removeTag(listKey, value){
+    state[listKey] = state[listKey].filter(x => x !== value);
+    renderTags(listKey);
+    renderCV();
+  }
+
+  function renderTags(listKey){
+    const container = listKey === "skills" ? $("skillsList") : $("interestsList");
+    container.innerHTML =
+      state[listKey].map(s => `
+        <span class="pill">${esc(s)} <span class="x" data-tag="${esc(s)}" data-key="${listKey}">×</span></span>
+      `).join("");
+    document.querySelectorAll(".x[data-tag]").forEach(x=>{
+      x.onclick = () => removeTag(x.dataset.key, x.dataset.tag);
+    });
+  }
+
+  // ---- Templates for dynamic sections ----
+  function expTemplate(exp={}, idx){
+    return `
+      <div class="section" data-exp="${idx}">
+        <div class="section-head">
+          <div class="muted tiny">Experience #${idx+1}</div>
+          <button class="btn small" data-remove-exp="${idx}">Remove</button>
+        </div>
+        <label>Company</label>
+        <input data-exp-company="${idx}" value="${esc(exp.company||"")}"/>
+        <label>Role</label>
+        <input data-exp-role="${idx}" value="${esc(exp.role||"")}"/>
+        <div class="row">
+          <div>
+            <label>Start date</label>
+            <input data-exp-start="${idx}" placeholder="MM YYYY" value="${esc(exp.start||"")}"/>
+          </div>
+          <div>
+            <label>End date</label>
+            <input data-exp-end="${idx}" placeholder="MM YYYY / Present" value="${esc(exp.end||"")}"/>
+          </div>
+        </div>
+        <label>Location / type</label>
+        <input data-exp-loc="${idx}" value="${esc(exp.location||"")}"/>
+        <label>Highlights (one bullet per line)</label>
+        <textarea data-exp-bullets="${idx}">${esc((exp.bullets||[]).join("\n"))}</textarea>
+      </div>
+    `;
+  }
+
+  function eduTemplate(edu={}, idx){
+    return `
+      <div class="section" data-edu="${idx}">
+        <div class="section-head">
+          <div class="muted tiny">Education #${idx+1}</div>
+          <button class="btn small" data-remove-edu="${idx}">Remove</button>
+        </div>
+        <label>Institution</label>
+        <input data-edu-school="${idx}" value="${esc(edu.school||"")}"/>
+        <label>Degree / Course</label>
+        <input data-edu-degree="${idx}" value="${esc(edu.degree||"")}"/>
+        <div class="row">
+          <div>
+            <label>Start</label>
+            <input data-edu-start="${idx}" placeholder="YYYY" value="${esc(edu.start||"")}"/>
+          </div>
+          <div>
+            <label>End</label>
+            <input data-edu-end="${idx}" placeholder="YYYY" value="${esc(edu.end||"")}"/>
+          </div>
+        </div>
+        <label>Notes (optional)</label>
+        <textarea data-edu-notes="${idx}">${esc(edu.notes||"")}</textarea>
+      </div>
+    `;
+  }
+
+  function volTemplate(vol={}, idx){
+    return `
+      <div class="section" data-vol="${idx}">
+        <div class="section-head">
+          <div class="muted tiny">Volunteering #${idx+1}</div>
+          <button class="btn small" data-remove-vol="${idx}">Remove</button>
+        </div>
+        <label>Organisation</label>
+        <input data-vol-org="${idx}" value="${esc(vol.org||"")}"/>
+        <label>Role / responsibility</label>
+        <input data-vol-role="${idx}" value="${esc(vol.role||"")}"/>
+        <div class="row">
+          <div>
+            <label>Start date</label>
+            <input data-vol-start="${idx}" placeholder="MM YYYY" value="${esc(vol.start||"")}"/>
+          </div>
+          <div>
+            <label>End date</label>
+            <input data-vol-end="${idx}" placeholder="MM YYYY / Present" value="${esc(vol.end||"")}"/>
+          </div>
+        </div>
+        <label>Highlights (one bullet per line)</label>
+        <textarea data-vol-bullets="${idx}">${esc((vol.bullets||[]).join("\n"))}</textarea>
+      </div>
+    `;
+  }
+
+  // ---- Render dynamic lists ----
+  function renderExperiences(){
+    $("expList").innerHTML = state.experiences.map(expTemplate).join("");
+    document.querySelectorAll("[data-remove-exp]").forEach(btn=>{
+      btn.onclick = () => {
+        const i = Number(btn.dataset.removeExp);
+        state.experiences.splice(i,1);
+        renderExperiences(); renderCV();
+      };
+    });
+    document.querySelectorAll("[data-exp-company],[data-exp-role],[data-exp-start],[data-exp-end],[data-exp-loc],[data-exp-bullets]").forEach(inp=>{
+      inp.oninput = () => {
+        const idx = Number(inp.closest("[data-exp]").dataset.exp);
+        const exp = state.experiences[idx];
+        if(inp.dataset.expCompany !== undefined) exp.company = inp.value;
+        if(inp.dataset.expRole !== undefined) exp.role = inp.value;
+        if(inp.dataset.expStart !== undefined) exp.start = inp.value;
+        if(inp.dataset.expEnd !== undefined) exp.end = inp.value;
+        if(inp.dataset.expLoc !== undefined) exp.location = inp.value;
+        if(inp.dataset.expBullets !== undefined) exp.bullets = inp.value.split("\n").map(x=>x.trim()).filter(Boolean);
+        renderCV();
+      };
+    });
+  }
+
+  function renderEducation(){
+    $("eduList").innerHTML = state.education.map(eduTemplate).join("");
+    document.querySelectorAll("[data-remove-edu]").forEach(btn=>{
+      btn.onclick = () => {
+        const i = Number(btn.dataset.removeEdu);
+        state.education.splice(i,1);
+        renderEducation(); renderCV();
+      };
+    });
+    document.querySelectorAll("[data-edu-school],[data-edu-degree],[data-edu-start],[data-edu-end],[data-edu-notes]").forEach(inp=>{
+      inp.oninput = () => {
+        const idx = Number(inp.closest("[data-edu]").dataset.edu);
+        const edu = state.education[idx];
+        if(inp.dataset.eduSchool !== undefined) edu.school = inp.value;
+        if(inp.dataset.eduDegree !== undefined) edu.degree = inp.value;
+        if(inp.dataset.eduStart !== undefined) edu.start = inp.value;
+        if(inp.dataset.eduEnd !== undefined) edu.end = inp.value;
+        if(inp.dataset.eduNotes !== undefined) edu.notes = inp.value;
+        renderCV();
+      };
+    });
+  }
+
+  function renderVolunteering(){
+    $("volList").innerHTML = state.volunteering.map(volTemplate).join("");
+    document.querySelectorAll("[data-remove-vol]").forEach(btn=>{
+      btn.onclick = () => {
+        const i = Number(btn.dataset.removeVol);
+        state.volunteering.splice(i,1);
+        renderVolunteering(); renderCV();
+      };
+    });
+    document.querySelectorAll("[data-vol-org],[data-vol-role],[data-vol-start],[data-vol-end],[data-vol-bullets]").forEach(inp=>{
+      inp.oninput = () => {
+        const idx = Number(inp.closest("[data-vol]").dataset.vol);
+        const vol = state.volunteering[idx];
+        if(inp.dataset.volOrg !== undefined) vol.org = inp.value;
+        if(inp.dataset.volRole !== undefined) vol.role = inp.value;
+        if(inp.dataset.volStart !== undefined) vol.start = inp.value;
+        if(inp.dataset.volEnd !== undefined) vol.end = inp.value;
+        if(inp.dataset.volBullets !== undefined) vol.bullets = inp.value.split("\n").map(x=>x.trim()).filter(Boolean);
+        renderCV();
+      };
+    });
+  }
+
+  // ---- Basics grab ----
+  function grabBasics(){
+    return {
+      name: $("name").value.trim(),
+      title: $("title").value.trim(),
+      email: $("email").value.trim(),
+      phone: $("phone").value.trim(),
+      location: $("location").value.trim(),
+      website: $("website").value.trim(),
+      linkedin: $("linkedin").value.trim(),
+      github: $("github").value.trim(),
+      summary: $("summary").value.trim(),
+      certs: $("certs").value.trim(),
+      languages: $("languages").value.trim(),
+      awards: $("awards").value.trim()
+    };
+  }
+
+  // ---- CV render ----
+  function renderCV(){
+    const b = grabBasics();
+    const skills = state.skills;
+    const interests = state.interests;
+    const exps = state.experiences;
+    const edus = state.education;
+    const vols = state.volunteering;
+
+    const certList = b.certs.split("\n").map(x=>x.trim()).filter(Boolean);
+    const langList = b.languages.split("\n").map(x=>x.trim()).filter(Boolean);
+    const awardList= b.awards.split("\n").map(x=>x.trim()).filter(Boolean);
+
+    $("cvPreview").innerHTML = `
+      <section class="cv">
+        <div class="cv-header">
+          <div>
+            <h1 class="cv-name">${esc(b.name || "Your Name")}</h1>
+            <div class="cv-title">${esc(b.title || "Your Job Title")}</div>
+            <div style="margin-top:8px;">
+              ${b.location ? `<span class="pill">📍 ${esc(b.location)}</span>` : ""}
+              ${skills.length ? `<span class="pill">🧠 ${skills.length} skills</span>` : ""}
+            </div>
+          </div>
+          <div class="cv-contact">
+            ${b.email ? `<div>📧 <a href="mailto:${esc(b.email)}">${esc(b.email)}</a></div>` : ""}
+            ${b.phone ? `<div>📱 ${esc(b.phone)}</div>` : ""}
+            ${b.website ? `<div>🌐 <a href="${esc(b.website)}" target="_blank">${esc(b.website)}</a></div>` : ""}
+            ${b.linkedin ? `<div>💼 <a href="${esc(b.linkedin)}" target="_blank">LinkedIn</a></div>` : ""}
+            ${b.github ? `<div>💻 <a href="${esc(b.github)}" target="_blank">GitHub</a></div>` : ""}
+          </div>
+        </div>
+
+        ${b.summary ? `
+          <div class="cv-section">
+            <h3>Profile</h3>
+            <div>${esc(b.summary)}</div>
+          </div>` : ""}
+
+        ${skills.length ? `
+          <div class="cv-section">
+            <h3>Skills</h3>
+            <div>
+              ${skills.map(s=>`<span class="pill">${esc(s)}</span>`).join("")}
+            </div>
+          </div>` : ""}
+
+        ${exps.length ? `
+          <div class="cv-section">
+            <h3>Experience</h3>
+            ${exps.map(e=>`
+              <div class="cv-item">
+                <div class="cv-item-head">
+                  <div>${esc(e.company||"Company")} — ${esc(e.role||"Role")}</div>
+                  <div class="muted">${esc(e.start||"")} ${e.end?`– ${esc(e.end)}`:""}</div>
+                </div>
+                ${e.location?`<div class="cv-item-sub">${esc(e.location)}</div>`:""}
+                ${e.bullets?.length?`
+                  <ul>${e.bullets.map(b=>`<li>${esc(b)}</li>`).join("")}</ul>
+                `:""}
+              </div>
+            `).join("")}
+          </div>` : ""}
+
+        ${vols.length ? `
+          <div class="cv-section">
+            <h3>Volunteering / Leadership</h3>
+            ${vols.map(v=>`
+              <div class="cv-item">
+                <div class="cv-item-head">
+                  <div>${esc(v.org||"Organisation")} — ${esc(v.role||"Role")}</div>
+                  <div class="muted">${esc(v.start||"")} ${v.end?`– ${esc(v.end)}`:""}</div>
+                </div>
+                ${v.bullets?.length?`
+                  <ul>${v.bullets.map(b=>`<li>${esc(b)}</li>`).join("")}</ul>
+                `:""}
+              </div>
+            `).join("")}
+          </div>` : ""}
+
+        ${edus.length ? `
+          <div class="cv-section">
+            <h3>Education</h3>
+            ${edus.map(e=>`
+              <div class="cv-item">
+                <div class="cv-item-head">
+                  <div>${esc(e.school||"Institution")} — ${esc(e.degree||"Course")}</div>
+                  <div class="muted">${esc(e.start||"")} ${e.end?`– ${esc(e.end)}`:""}</div>
+                </div>
+                ${e.notes?`<div class="cv-item-sub">${esc(e.notes)}</div>`:""}
+              </div>
+            `).join("")}
+          </div>` : ""}
+
+        ${awardList.length ? `
+          <div class="cv-section">
+            <h3>Awards / Achievements</h3>
+            ${awardList.map(a=>`<div class="cv-item">${esc(a)}</div>`).join("")}
+          </div>` : ""}
+
+        ${certList.length ? `
+          <div class="cv-section">
+            <h3>Certifications</h3>
+            ${certList.map(c=>`<div class="cv-item">${esc(c)}</div>`).join("")}
+          </div>` : ""}
+
+        ${langList.length ? `
+          <div class="cv-section">
+            <h3>Languages</h3>
+            ${langList.map(l=>`<div class="cv-item">${esc(l)}</div>`).join("")}
+          </div>` : ""}
+
+        ${interests.length ? `
+          <div class="cv-section">
+            <h3>Interests / Hobbies</h3>
+            <div>${interests.map(i=>`<span class="pill">${esc(i)}</span>`).join("")}</div>
+          </div>` : ""}
+      </section>
+    `;
+  }
+
+  function attachLiveInputs(){
+    [
+      "name","title","email","phone","location","website","linkedin","github",
+      "summary","certs","languages","awards"
+    ].forEach(id => $(id).addEventListener("input", renderCV));
+  }
+
+  // ---------- AI Summary ----------
+  function fallbackSummary(){
+    const b = grabBasics();
+    const role = $("targetRole").value.trim();
+    const topSkills = state.skills.slice(0,6).join(", ");
+    const expCount = state.experiences.length;
+
+    return [
+      `${b.title || role || "Professional"} with ${expCount ? expCount + " experience roles" : "hands-on experience"} in ${topSkills || "key technical and soft skills"}.`,
+      `Known for being reliable, quick to learn, and focused on delivering measurable results.`,
+      `Looking to contribute to a ${role || "forward-thinking team"} where I can grow and add value from day one.`
+    ].join(" ");
+  }
+
+  async function generateAISummary(){
+    const apiKey = $("apiKey").value.trim();
+    const b = grabBasics();
+    const role = $("targetRole").value.trim();
+    const notes = $("aiNotes").value.trim();
+    const skills = state.skills.join(", ");
+    const exps = state.experiences.map(e =>
+      `${e.role || "Role"} at ${e.company || "Company"} (${e.start||""}-${e.end||""}): ${(e.bullets||[]).join("; ")}`
+    ).join("\n");
+    const edus = state.education.map(e =>
+      `${e.degree||"Degree"} at ${e.school||"School"} (${e.start||""}-${e.end||""})`
+    ).join("\n");
+    const vols = state.volunteering.map(v =>
+      `${v.role || "Role"} at ${v.org || "Org"} (${v.start||""}-${v.end||""}): ${(v.bullets||[]).join("; ")}`
+    ).join("\n");
+    const awards = b.awards || "";
+    const interests = state.interests.join(", ");
+
+    if(!apiKey){
+      $("summary").value = fallbackSummary();
+      renderCV();
+      return;
+    }
+
+    // OpenAI Responses API (client-side demo)
+    // https://platform.openai.com/docs/api-reference/responses :contentReference[oaicite:2]{index=2}
+    const prompt = `
+Write a crisp CV professional summary (3–4 sentences).
+Target role: ${role || b.title || "Not specified"}.
+Name: ${b.name || "Candidate"}.
+Skills: ${skills || "Not specified"}.
+Experience:\n${exps || "Not specified"}\n
+Volunteering/Leadership:\n${vols || "Not specified"}\n
+Education:\n${edus || "Not specified"}\n
+Awards:\n${awards || "None"}\n
+Interests:\n${interests || "None"}\n
+Extra notes from candidate: ${notes || "None"}.
+Tone: confident, warm, no buzzword spam. Mention impact and strengths.
+`;
+
+    try{
+      $("genSummary").textContent = "✨ Generating...";
+      $("genSummary").disabled = true;
+
+      const res = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: {
+          "Content-Type":"application/json",
+          "Authorization":`Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4.1-mini",
+          input: prompt,
+          temperature: 0.7,
+          max_output_tokens: 180
+        })
+      });
+
+      if(!res.ok){
+        throw new Error("OpenAI error: " + res.status);
+      }
+
+      const data = await res.json();
+      const text =
+        data.output?.[0]?.content?.map(c=>c.text).join("") ||
+        data.output_text ||
+        "";
+
+      $("summary").value = text.trim() || fallbackSummary();
+      renderCV();
+
+    }catch(err){
+      console.error(err);
+      alert("AI summary failed. Using fallback summary instead.");
+      $("summary").value = fallbackSummary();
+      renderCV();
+    }finally{
+      $("genSummary").textContent = "✨ Generate AI Summary";
+      $("genSummary").disabled = false;
+    }
+  }
+
+  // ---------- Local storage ----------
+  function saveLocal(){
+    const payload = { basics: grabBasics(), state };
+    localStorage.setItem("cvgen_data", JSON.stringify(payload));
+    alert("Saved!");
+  }
+  function loadLocal(){
+    const raw = localStorage.getItem("cvgen_data");
+    if(!raw) return alert("Nothing saved yet.");
+    const payload = JSON.parse(raw);
+
+    const b = payload.basics || {};
+    Object.keys(b).forEach(k => setValue(k, b[k]));
+
+    state.skills = payload.state?.skills || [];
+    state.experiences = payload.state?.experiences || [];
+    state.education = payload.state?.education || [];
+    state.volunteering = payload.state?.volunteering || [];
+    state.interests = payload.state?.interests || [];
+
+    renderTags("skills");
+    renderExperiences();
+    renderEducation();
+    renderVolunteering();
+    renderTags("interests");
+    renderCV();
+  }
+
+  // ---------- Demo ----------
+  function loadDemo(){
+    setValue("name","Jordan Smith");
+    setValue("title","Frontend Developer");
+    setValue("email","jordan@email.com");
+    setValue("phone","+44 7123 456 789");
+    setValue("location","London, UK");
+    setValue("website","https://jordansmith.dev");
+    setValue("linkedin","https://linkedin.com/in/jordansmith");
+    setValue("github","https://github.com/jordansmith");
+
+    state.skills = ["JavaScript","TypeScript","React","HTML/CSS","UI/UX","APIs"];
+    state.experiences = [
+      {
+        company:"Bright Labs",
+        role:"Frontend Developer",
+        start:"Jun 2023",
+        end:"Present",
+        location:"London · Full-time",
+        bullets:[
+          "Built responsive React components used by 50k+ users monthly",
+          "Improved Lighthouse performance scores from 68 to 93",
+          "Worked closely with design to ship a new UI system"
+        ]
+      }
+    ];
+    state.education = [
+      { school:"University of Example", degree:"BSc Computer Science", start:"2019", end:"2022", notes:"First-Class Honours" }
+    ];
+    state.volunteering = [
+      {
+        org:"Code Club UK",
+        role:"Volunteer Mentor",
+        start:"2022",
+        end:"2023",
+        bullets:["Taught basic web dev to teens weekly","Helped coordinate local hack-day"]
+      }
+    ];
+    state.interests = ["Running","Photography","Open-source"];
+
+    setValue("awards","Employee of the Month — 2024\nBest Graduation Project — 2022");
+    setValue("certs","Meta Front-End Certificate — 2024");
+    setValue("languages","English — Fluent\nSpanish — Intermediate");
+
+    renderTags("skills");
+    renderExperiences();
+    renderEducation();
+    renderVolunteering();
+    renderTags("interests");
+
+    $("summary").value = fallbackSummary();
+    renderCV();
+  }
+
+  // ---------- Theme toggle ----------
+  function toggleTheme(){
+    const body = document.body;
+    body.dataset.theme = body.dataset.theme === "dark" ? "light" : "dark";
+  }
+
+  // ---------- Events ----------
+  $("addSkill").onclick = () => { addTag("skills", $("skillInput").value); $("skillInput").value=""; };
+  $("skillInput").addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){ e.preventDefault(); addTag("skills", $("skillInput").value); $("skillInput").value=""; }
+  });
+
+  $("addInterest").onclick = () => { addTag("interests", $("interestInput").value); $("interestInput").value=""; };
+  $("interestInput").addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){ e.preventDefault(); addTag("interests", $("interestInput").value); $("interestInput").value=""; }
+  });
+
+  $("addExp").onclick = () => {
+    state.experiences.push({company:"",role:"",start:"",end:"",location:"",bullets:[]});
+    renderExperiences(); renderCV();
+  };
+
+  $("addEdu").onclick = () => {
+    state.education.push({school:"",degree:"",start:"",end:"",notes:""});
+    renderEducation(); renderCV();
+  };
+
+  $("addVol").onclick = () => {
+    state.volunteering.push({org:"",role:"",start:"",end:"",bullets:[]});
+    renderVolunteering(); renderCV();
+  };
+
+  $("genSummary").onclick = generateAISummary;
+  $("clearSummary").onclick = () => { $("summary").value=""; renderCV(); };
+
+  $("saveLocal").onclick = saveLocal;
+  $("loadLocal").onclick = loadLocal;
+  $("loadDemo").onclick = loadDemo;
+  $("toggleTheme").onclick = toggleTheme;
+
+  // Init
+  attachLiveInputs();
+  renderTags("skills");
+  renderExperiences();
+  renderEducation();
+  renderVolunteering();
+  renderTags("interests");
+  renderCV();
+</script>
+
+</body>
+</html>
